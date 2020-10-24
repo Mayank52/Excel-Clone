@@ -352,6 +352,16 @@ $(document).ready(function () {
   function addFormula(formula) {
     let { rowID, colID } = getRowIdColId(lsc);
     let cellObj = db[rowID][colID];
+
+    //Cycle Detection
+    if (checkCycle(cellObj, formula)) {
+      console.log("Cycle Detected");
+      alert("Cycle Detected!");
+      return;
+    } else {
+      console.log("No Cycle");
+    }
+
     //update cellobject formula with this formula
     cellObj.formula = formula;
     //update parents of cellobject
@@ -383,6 +393,44 @@ $(document).ready(function () {
     // console.log(formula);
     let val = eval(formula);
     return val;
+  }
+
+  //Cycle Detection
+  function checkCycle(cellObj, formula) {
+    //add all my parents i.e. the cells given in formula in the visite array
+    let vis = [];
+    let myParents = getParents(formula);
+    myParents.map((parent) => vis.push(parent));
+
+    console.log(`Visited array: ${vis}`);
+    return detectCycle(cellObj, vis);
+  }
+
+  function detectCycle(cellObj, vis) {
+    let childArray = cellObj.childs;
+
+    console.log(`Current Cell ${cellObj.name}`);
+    console.log(`Child Array: ${childArray}`);
+
+    vis.push(cellObj.name);
+
+    let res=false;
+
+    for (let i = 0; i < childArray.length; i++) {
+      let childName = childArray[i];
+      let { rowID, colID } = getRowAndColFromAddress(childName);
+      let childObj = db[rowID][colID];
+      if (vis.includes(childName)) return true;
+      else {
+        res = res || detectCycle(childObj, vis);
+      }
+    }
+
+    vis.filter((name) => {
+      return name != cellObj.name;
+    });
+
+    return res;
   }
 
   // Utility Functions====================================================================
