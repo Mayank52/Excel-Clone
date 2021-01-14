@@ -1,9 +1,3 @@
-/*
-bugs:
-open doesnot reset left col heights to the opened file heights
-Font Family selector UI is not reset in select box
-*/
-
 let $ = require("jquery");
 let fs = require("fs");
 let dialog = require("electron").remote.dialog;
@@ -14,7 +8,6 @@ $(document).ready(function () {
 
   //DOM Functions=========================================================================
 
-  //Menu Functions
   $("#new").on("click", function () {
     console.log("clicked on new.");
     db = [];
@@ -33,9 +26,10 @@ $(document).ready(function () {
           leftColHeight: 18,
           fontStyle: { bold: false, underline: false, italic: false },
           fontFamily: "Times New Roman",
-          // fontSize: 10,
-          fontColor: "black",
+          textcolor: "black",
           textAlignment: { left: false, center: true, right: false },
+          fontsize: "16px",
+          background: "white",
         };
 
         row.push(cellObject);
@@ -46,13 +40,14 @@ $(document).ready(function () {
         $(allCols[j]).css("text-alignment", "center");
         $(allCols[j]).css("font-family", "Times New Roman");
         $(allCols[j]).css("font-color", "black");
+        $(allCols[j]).css("background-color", "white");
       }
       db.push(row);
     }
     //reset heights of left cells
     let leftCols = $("#left-col .left-cell");
     for (let i = 0; i < leftCols.length; i++) {
-      $(leftCols[i]).height("18");
+      $(leftCols[i]).height("18.4");
     }
     $("#address").val("");
     $("#formula-input").val("");
@@ -230,13 +225,16 @@ $(document).ready(function () {
     cellObj.leftColHeight = ht;
   });
 
-  // file and menu
+  // Toggle between file and menu options
   $(".menu-container div").on("click", function () {
     let id = $(this).attr("id");
     //id = file
     $(".file-menu-options").removeClass("active");
     $(".home-menu-options").removeClass("active");
     $(`.${id}-menu-options`).addClass("active");
+    if (id == "file") $(`.file-menu-options`).addClass("active");
+
+    console.log(`.${id}-menu-options`);
   });
 
   //Formula Bar Functions==================================================================
@@ -397,24 +395,24 @@ $(document).ready(function () {
 
   //Cycle Detection
   function checkCycle(cellObj, formula) {
-    //add all my parents i.e. the cells given in formula in the visite array
+    //add all my parents i.e. the cells given in formula in the visited array
     let vis = [];
     let myParents = getParents(formula);
     myParents.map((parent) => vis.push(parent));
 
-    console.log(`Visited array: ${vis}`);
+    //check if the current cell is forming the cycle with itself
+    for (let i = 0; i < myParents.length; i++) {
+      if (myParents[i] == cellObj.name) return true;
+    }
+
+    //check for all its children
     return detectCycle(cellObj, vis);
   }
-
   function detectCycle(cellObj, vis) {
     let childArray = cellObj.childs;
-
-    console.log(`Current Cell ${cellObj.name}`);
-    console.log(`Child Array: ${childArray}`);
-
     vis.push(cellObj.name);
 
-    let res=false;
+    let res = false;
 
     for (let i = 0; i < childArray.length; i++) {
       let childName = childArray[i];
@@ -452,6 +450,40 @@ $(document).ready(function () {
       colID: colId,
     };
   }
+
+  //cell size -> done
+  $("#size").on("click", function () {
+    let cellobject = getcellobject(lsc);
+    let currsize = $("#size").children("option").filter(":selected").text();
+    $(lsc).css("font-size", `${currsize}px`);
+    cellobject.fontsize = `${currsize}px`;
+  });
+
+  //text color -> done
+  $("#cell-background").on("click", function () {
+    let cellobject = getcellobject(lsc);
+    // console.log("hi");
+    let currcolor = $("#cell-background").val();
+    // let currcolor = $("#cell-background").children("option").filter(":selected").text();
+    $(lsc).css("background-color", currcolor);
+    cellobject.background = `${currcolor}`;
+  });
+  $("#cell-text").on("click", function () {
+    let cellobject = getcellobject(lsc);
+    let currtextcolor = $("#cell-text").val();
+    // let currtextcolor = $("#cell-text").children("option").filter(":selected").text();
+    $(lsc).css("color", currtextcolor);
+    cellobject.textcolor = `${currtextcolor}`;
+  });
+
+  //function to get cell object from db using address
+  function getcellobject(elem) {
+    let rowid = Number($(elem).attr("r-id"));
+    let colid = Number($(elem).attr("c-id"));
+    let cellobject = db[rowid][colid];
+    return cellobject;
+  }
+
   //make local database
   function init() {
     $("#new").trigger("click");
