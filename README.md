@@ -1,5 +1,6 @@
 # Sheets-Application
-## Built Using:
+### An Excel Clone
+### Built Using:
 - EJS
 - CSS
 - Javascript
